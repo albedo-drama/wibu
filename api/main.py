@@ -259,7 +259,7 @@ HTML_DETAIL = """
     <div id="eps" class="border-t border-white/10 pt-8">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-lg font-bold text-white border-l-4 border-red-600 pl-3">DAFTAR EPISODE</h3>
-            <button onclick="reverseList()" class="text-[10px] bg-[#151515] hover:bg-[#222] px-3 py-1 rounded text-gray-400 transition">⇅ Balik Urutan</button>
+            <button onclick="reverseList()" class="text-xs bg-[#151515] hover:bg-[#222] px-4 py-2 rounded-lg text-gray-400 transition">⇅ Balik Urutan</button>
         </div>
         
         <div id="chapter-list" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2 max-h-[500px] overflow-y-auto custom-scroll pr-1">
@@ -370,7 +370,7 @@ HTML_WATCH = """
 HTML_FAVORITES = """
 {% extends "base.html" %}
 {% block content %}
-<h2 class="text-lg font-bold mb-4 border-l-4 border-red-600 pl-3">KOLEKSIKU</h2>
+<h2 class="text-xl font-bold text-white mb-6 border-l-4 border-red-600 pl-3">KOLEKSIKU</h2>
 <div id="grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>
 <div id="empty" class="hidden text-center py-32 text-gray-600 text-sm">Belum ada anime yang disimpan.</div>
 <script>
@@ -392,7 +392,7 @@ HTML_FAVORITES = """
 """
 
 # ==========================================
-# 3. BACKEND LOGIC (DATA NORMALIZER)
+# 3. BACKEND LOGIC
 # ==========================================
 
 app = Flask(__name__)
@@ -410,9 +410,9 @@ API_BASE = "https://api.sansekai.my.id/api/anime"
 HEADERS = {'User-Agent': 'Mozilla/5.0'}
 
 @lru_cache(maxsize=64)
-def smart_fetch(endpoint, query_str=None, page=1):
+def smart_fetch(endpoint, params=None):
     try:
-        r = requests.get(f"{API_BASE}{endpoint}", headers=HEADERS, params={'query':query_str, 'page':page}, timeout=12)
+        r = requests.get(f"{API_BASE}{endpoint}", headers=HEADERS, params=params, timeout=12)
         raw = r.json()
         if isinstance(raw, list): return raw
         if 'data' in raw:
@@ -422,7 +422,7 @@ def smart_fetch(endpoint, query_str=None, page=1):
         return []
     except: return []
 
-# NORMALISASI DATA (PENTING UNTUK RATING)
+# NORMALISASI DATA
 def normalize_data_list(data_list):
     cleaned = []
     if not data_list: return []
@@ -464,20 +464,14 @@ def get_nav(chapters, current_url):
 @app.route('/')
 def home():
     page = request.args.get('page', 1, type=int)
-    # GANTI STRATEGI: GUNAKAN /recent AGAR PAGINATION JALAN
-    raw_data = smart_fetch('/recent', params={'page': page})
-    
-    # Jika /recent kosong di page 1 (mungkin error), fallback ke /latest
-    if not raw_data and page == 1:
-        raw_data = smart_fetch('/latest')
-        
+    raw_data = smart_fetch('/recommended', params={'page': page}) # USE RECOMMENDED FOR STABILITY
     data = normalize_data_list(raw_data)
     return render_template_string(HTML_INDEX, data_list=data, current_page=page, is_movie_page=False, search_query=None)
 
 @app.route('/movies')
 def movies():
     page = request.args.get('page', 1, type=int)
-    raw_data = smart_fetch('/movie', page=page)
+    raw_data = smart_fetch('/movie', params={'page': page}) # FIX PARAMS PASSING
     data = normalize_data_list(raw_data)
     return render_template_string(HTML_INDEX, data_list=data, current_page=page, is_movie_page=True, search_query=None)
 
@@ -494,7 +488,7 @@ def search():
     q = request.args.get('q')
     page = request.args.get('page', 1, type=int)
     if not q: return render_template_string(HTML_SEARCH_LANDING)
-    raw_data = smart_fetch('/search', query_str=q, page=page)
+    raw_data = smart_fetch('/search', params={'query': q, 'page': page})
     data = normalize_data_list(raw_data)
     return render_template_string(HTML_INDEX, data_list=data, search_query=q, current_page=page)
 
@@ -507,15 +501,13 @@ def detail(url_id):
             anime = raw[0]
             anime['rating'] = anime.get('score', anime.get('rating', 'N/A'))
             sinopsis = anime.get('sinopsis') or anime.get('synopsis')
-            if not sinopsis or sinopsis == 'N/A' or sinopsis.strip() == '':
-                sinopsis = "Sinopsis belum tersedia untuk anime ini."
+            if not sinopsis or sinopsis == 'N/A' or sinopsis.strip() == '': sinopsis = "Sinopsis belum tersedia."
             anime['sinopsis'] = sinopsis
             eps = anime.get('chapter', [])
             anime['custom_total_eps'] = f"{len(eps)} Eps"
             if not anime.get('series_id'): anime['series_id'] = url_id
         else: anime = None
     except: anime = None
-    
     if not anime: return render_template_string(HTML_DETAIL, error="Gagal memuat data anime.")
     return render_template_string(HTML_DETAIL, anime=anime)
 
@@ -526,22 +518,16 @@ def watch(anime_url, chapter_url):
         r_vid = requests.get(f"{API_BASE}/getvideo", headers=HEADERS, params={'chapterUrlId': chapter_url}, timeout=10)
         vid_data = r_vid.json().get('data', [])
     except: vid_data = []
-
     try:
         r_det = requests.get(f"{API_BASE}/detail", headers=HEADERS, params={'urlId': anime_url}, timeout=10)
         anime_data = r_det.json().get('data', [])
     except: anime_data = []
-    
     title = anime_data[0].get('judul') if anime_data else (title_p or "")
     chapters = anime_data[0].get('chapter', []) if anime_data else []
     next_ep, prev_ep = get_nav(chapters, chapter_url)
     video_info = vid_data[0] if vid_data else None
     player_url = get_best_quality_url(video_info.get('stream', []) if video_info else [])
-
-    return render_template_string(
-        HTML_WATCH, video=video_info, player_url=player_url,
-        anime_title=title, anime_url=anime_url, current_url=chapter_url, next_ep=next_ep, prev_ep=prev_ep
-    )
+    return render_template_string(HTML_WATCH, video=video_info, player_url=player_url, anime_title=title, anime_url=anime_url, current_url=chapter_url, next_ep=next_ep, prev_ep=prev_ep)
 
 if __name__ == '__main__':
     app.run(debug=True)

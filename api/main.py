@@ -5,7 +5,7 @@ import json
 from functools import lru_cache
 
 # ==========================================
-# 1. KONFIGURASI
+# 1. DATA STATIC
 # ==========================================
 
 GENRE_LIST = sorted([
@@ -18,7 +18,7 @@ GENRE_LIST = sorted([
 ])
 
 # ==========================================
-# 2. TEMPLATES HTML
+# 2. TEMPLATES HTML (CINEMATIC DESIGN)
 # ==========================================
 
 HTML_BASE = """
@@ -26,82 +26,106 @@ HTML_BASE = """
 <html lang="id" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}ALBEDOWIBU-TV{% endblock %}</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700;800&display=swap" rel="stylesheet">
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css" />
 
     <style>
-        body { background-color: #0a0a0a; color: #e5e5e5; font-family: 'Inter', sans-serif; }
-        #nprogress .bar { background: #ef4444 !important; height: 3px; }
-        .card-hover:hover { transform: translateY(-3px); transition: 0.2s ease-in-out; }
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: #111; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 5px; }
-        ::-webkit-scrollbar-thumb:hover { background: #ef4444; }
+        :root { --primary: #6366f1; --bg-dark: #050507; --glass: rgba(255, 255, 255, 0.03); }
+        body { background-color: var(--bg-dark); color: #eef2ff; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        /* Custom NProgress */
+        #nprogress .bar { background: linear-gradient(to right, #8b5cf6, #ec4899) !important; height: 3px; }
+        #nprogress .peg { box-shadow: 0 0 15px #8b5cf6, 0 0 5px #ec4899; }
+
+        /* Smooth Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
+
+        /* Effects */
+        .glass-panel { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+        .text-glow { text-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+        .card-anim { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-anim:hover { transform: translateY(-5px); box-shadow: 0 15px 30px -10px rgba(139, 92, 246, 0.2); }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
     
-    <nav class="bg-black/90 border-b border-white/5 sticky top-0 z-50 backdrop-blur-md">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-[#050507]/80 backdrop-blur-xl border-b border-white/5 transition-all duration-300">
         <div class="container mx-auto px-4 h-16 flex items-center justify-between">
-            <a href="/" class="text-xl font-black tracking-tighter text-white flex items-center gap-1 group">
-                ALBEDO<span class="text-red-600 group-hover:text-white transition">WIBU</span>-TV
+            <a href="/" class="flex items-center gap-2 group">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-violet-500/20 group-hover:scale-105 transition">
+                    <i class="ri-play-fill text-xl"></i>
+                </div>
+                <span class="text-lg font-bold tracking-tight text-white hidden sm:block">ALBEDO<span class="text-violet-500">TV</span></span>
             </a>
 
-            <div class="hidden md:flex gap-6 text-xs font-bold text-gray-400">
-                <a href="/" class="hover:text-white transition">HOME</a>
-                <a href="/movies" class="hover:text-white transition">MOVIES</a>
-                <a href="/genres" class="hover:text-white transition">GENRE</a>
-                <a href="/favorites" class="hover:text-white transition">KOLEKSIKU</a>
-                <a href="/history" class="hover:text-white transition">RIWAYAT</a>
-            </div>
-
-            <form action="/search" method="GET" class="relative group">
-                <input type="text" name="q" placeholder="Cari..." value="{{ search_query if search_query else '' }}"
-                       class="bg-[#151515] border border-white/10 rounded-full py-2 pl-4 pr-10 text-xs text-white focus:outline-none focus:border-red-600 w-32 md:w-56 transition-all focus:bg-black">
-                <button type="submit" class="absolute right-3 top-2 text-gray-500 group-focus-within:text-white">
-                    <i class="ri-search-line"></i>
-                </button>
+            <form action="/search" method="GET" class="flex-1 max-w-md mx-4 relative group">
+                <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                    <i class="ri-search-line text-gray-500 group-focus-within:text-violet-500 transition"></i>
+                </div>
+                <input type="text" name="q" placeholder="Cari anime..." value="{{ search_query if search_query else '' }}"
+                       class="w-full bg-white/5 border border-white/5 rounded-full py-2.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:bg-white/10 focus:border-violet-500/50 transition-all placeholder-gray-600">
             </form>
-        </div>
-        
-        <div class="md:hidden fixed bottom-0 left-0 right-0 bg-[#0a0a0a] border-t border-white/10 flex justify-around p-3 z-50 pb-safe">
-            <a href="/" class="text-center text-[10px] font-bold text-gray-500 hover:text-white {{ 'text-red-500' if request.path == '/' }}">
-                <i class="ri-home-5-line text-lg block mb-0.5"></i> HOME
-            </a>
-            <a href="/genres" class="text-center text-[10px] font-bold text-gray-500 hover:text-white {{ 'text-red-500' if request.path == '/genres' }}">
-                <i class="ri-layout-grid-line text-lg block mb-0.5"></i> GENRE
-            </a>
-            <a href="/favorites" class="text-center text-[10px] font-bold text-gray-500 hover:text-white {{ 'text-red-500' if request.path == '/favorites' }}">
-                <i class="ri-heart-3-line text-lg block mb-0.5"></i> SAVED
-            </a>
-            <a href="/history" class="text-center text-[10px] font-bold text-gray-500 hover:text-white {{ 'text-red-500' if request.path == '/history' }}">
-                <i class="ri-history-line text-lg block mb-0.5"></i> HIST
-            </a>
+
+            <div class="hidden md:flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/5">
+                <a href="/" class="px-4 py-1.5 rounded-full text-xs font-bold transition {{ 'bg-white/10 text-white' if request.path == '/' else 'text-gray-400 hover:text-white' }}">HOME</a>
+                <a href="/movies" class="px-4 py-1.5 rounded-full text-xs font-bold transition {{ 'bg-white/10 text-white' if request.path == '/movies' else 'text-gray-400 hover:text-white' }}">FILM</a>
+                <a href="/genres" class="px-4 py-1.5 rounded-full text-xs font-bold transition {{ 'bg-white/10 text-white' if request.path == '/genres' else 'text-gray-400 hover:text-white' }}">GENRE</a>
+                <a href="/favorites" class="px-4 py-1.5 rounded-full text-xs font-bold transition {{ 'bg-white/10 text-white' if request.path == '/favorites' else 'text-gray-400 hover:text-white' }}">SAVED</a>
+            </div>
         </div>
     </nav>
 
-    <main class="container mx-auto px-4 py-8 flex-grow pb-24 md:pb-12">
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-[#0a0a0c]/95 backdrop-blur-xl border-t border-white/5 flex justify-around items-center p-2 z-50 pb-safe">
+        <a href="/" class="flex flex-col items-center p-2 rounded-lg {{ 'text-violet-400' if request.path == '/' else 'text-gray-500' }}">
+            <i class="ri-home-5-{{ 'fill' if request.path == '/' else 'line' }} text-xl mb-0.5"></i>
+            <span class="text-[10px] font-bold">Home</span>
+        </a>
+        <a href="/genres" class="flex flex-col items-center p-2 rounded-lg {{ 'text-violet-400' if request.path == '/genres' else 'text-gray-500' }}">
+            <i class="ri-compass-3-{{ 'fill' if request.path == '/genres' else 'line' }} text-xl mb-0.5"></i>
+            <span class="text-[10px] font-bold">Genre</span>
+        </a>
+        <a href="/history" class="flex flex-col items-center p-2 rounded-lg {{ 'text-violet-400' if request.path == '/history' else 'text-gray-500' }}">
+            <i class="ri-history-line text-xl mb-0.5"></i>
+            <span class="text-[10px] font-bold">Riwayat</span>
+        </a>
+        <a href="/favorites" class="flex flex-col items-center p-2 rounded-lg {{ 'text-violet-400' if request.path == '/favorites' else 'text-gray-500' }}">
+            <i class="ri-heart-3-{{ 'fill' if request.path == '/favorites' else 'line' }} text-xl mb-0.5"></i>
+            <span class="text-[10px] font-bold">Saved</span>
+        </a>
+    </div>
+
+    <main class="container mx-auto px-4 pt-24 pb-28 md:pb-12 flex-grow fade-in">
         {% block content %}{% endblock %}
     </main>
+
+    <footer class="hidden md:block text-center p-8 mt-auto border-t border-white/5 text-gray-600 text-xs">
+        <p>&copy; 2026 ALBEDOWIBU-TV. Stream Responsibly.</p>
+    </footer>
 
     <script>
         window.addEventListener('beforeunload', () => NProgress.start());
         document.addEventListener("DOMContentLoaded", () => {
             NProgress.done();
+            // Auto-mark history
             const history = JSON.parse(localStorage.getItem('watched_episodes') || '[]');
             history.forEach(url => {
                 const links = document.querySelectorAll(`a[href*="${url}"]`);
                 links.forEach(link => {
-                    link.classList.add('opacity-50', 'grayscale');
-                    if(link.querySelector('.ep-title')) {
-                        link.querySelector('.ep-title').classList.replace('text-white', 'text-red-500');
-                    }
+                    link.classList.add('opacity-60', 'grayscale');
+                    const badge = link.querySelector('.ep-badge');
+                    if(badge) { badge.innerHTML = '<i class="ri-check-line text-green-400"></i>'; }
                 });
             });
         });
@@ -114,61 +138,89 @@ HTML_INDEX = """
 {% extends "base.html" %}
 {% block content %}
 
-<div class="mb-6 flex justify-between items-end border-b border-white/5 pb-4">
-    <h2 class="text-lg font-bold text-white flex items-center gap-2">
+{% if current_page == 1 and not search_query and not is_movie_page and data_list %}
+    {% set featured = data_list[0] %}
+    <div class="relative w-full h-[280px] md:h-[400px] rounded-3xl overflow-hidden mb-12 group">
+        <div class="absolute inset-0 bg-cover bg-center transition duration-1000 group-hover:scale-105" style="background-image: url('{{ featured.cover }}');"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#050507] via-[#050507]/60 to-transparent"></div>
+        
+        <div class="absolute bottom-0 left-0 p-6 md:p-10 w-full md:w-2/3">
+            <span class="inline-block px-3 py-1 mb-3 rounded-md bg-violet-600/90 text-white text-[10px] font-bold tracking-wider uppercase shadow-lg shadow-violet-600/20">
+                Terbaru Rilis
+            </span>
+            <h1 class="text-2xl md:text-5xl font-black text-white mb-2 leading-tight drop-shadow-lg line-clamp-2">
+                {{ featured.judul }}
+            </h1>
+            <p class="text-gray-300 text-xs md:text-sm mb-6 line-clamp-2 md:line-clamp-none opacity-80">
+                Episode terbaru {{ featured.lastch }} sudah tersedia. Tonton sekarang dengan kualitas HD tanpa iklan.
+            </p>
+            <a href="/anime/{{ featured.url if featured.url else featured.id }}" class="inline-flex items-center gap-2 px-6 py-3 bg-white text-black rounded-xl font-bold text-sm hover:bg-gray-200 transition transform hover:scale-105 shadow-xl">
+                <i class="ri-play-circle-fill text-xl"></i> TONTON SEKARANG
+            </a>
+        </div>
+    </div>
+{% endif %}
+
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-xl font-bold text-white flex items-center gap-2">
         {% if search_query %}
-            <span class="text-red-600">🔍</span> Hasil: "{{ search_query }}"
+            <span class="text-violet-500">🔍</span> Hasil Pencarian
         {% elif is_movie_page %}
-            <span class="text-red-600">🎬</span> Movies
+            <span class="text-pink-500">🎬</span> Movies Archive
         {% else %}
-            <span class="text-red-600">🔥</span> Update Terbaru
+            <span class="text-indigo-500">🔥</span> Update Lainnya
         {% endif %}
     </h2>
-    <span class="text-[10px] font-mono text-gray-500">Hal {{ current_page }}</span>
+    
+    <div class="flex items-center gap-2 bg-white/5 rounded-full p-1 border border-white/5">
+        {% set base = '/search?q=' + (search_query if search_query else '') + '&page=' if search_query else ('/movies?page=' if is_movie_page else '/?page=') %}
+        
+        {% if current_page > 1 %}
+        <a href="{{ base }}{{ current_page - 1 }}" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition"><i class="ri-arrow-left-s-line"></i></a>
+        {% endif %}
+        <span class="text-xs font-mono font-bold text-white px-2">{{ current_page }}</span>
+        <a href="{{ base }}{{ current_page + 1 }}" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition"><i class="ri-arrow-right-s-line"></i></a>
+    </div>
 </div>
 
-<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-5">
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
     {% if not data_list %}
-        <div class="col-span-full py-20 text-center bg-[#111] rounded-xl border border-white/5">
-            <p class="text-gray-500 text-xs">Tidak ada data ditemukan.</p>
-            {% if current_page > 1 %}
-            <a href="javascript:history.back()" class="text-red-500 text-xs hover:underline mt-2 inline-block">Kembali</a>
-            {% endif %}
+        <div class="col-span-full py-32 text-center">
+            <div class="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">👻</div>
+            <p class="text-gray-500 text-sm">Tidak ada anime ditemukan.</p>
         </div>
     {% endif %}
 
     {% for anime in data_list %}
-    <a href="/anime/{{ anime.url if anime.url else anime.id }}" class="card-hover block bg-[#111] rounded-lg overflow-hidden relative group border border-white/5">
+    {% if not (current_page == 1 and not search_query and not is_movie_page and loop.index == 1) %}
+    <a href="/anime/{{ anime.url if anime.url else anime.id }}" class="card-anim group relative block bg-[#111] rounded-2xl overflow-hidden">
         <div class="aspect-[3/4] overflow-hidden relative">
-            <img src="{{ anime.cover }}" loading="lazy" class="w-full h-full object-cover transition duration-500 group-hover:scale-110 group-hover:opacity-60">
-            <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+            <img src="{{ anime.cover }}" loading="lazy" class="w-full h-full object-cover transition duration-700 group-hover:scale-110">
+            <div class="absolute inset-0 bg-gradient-to-t from-[#050507] via-transparent to-transparent opacity-80"></div>
             
-            {% if anime.score %}
-            <div class="absolute top-1 right-1 bg-yellow-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded shadow">★ {{ anime.score }}</div>
-            {% endif %}
-            
-            <div class="absolute bottom-0 left-0 right-0 p-3">
-                {% if anime.lastch %}
-                <span class="bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded mb-1 inline-block">{{ anime.lastch }}</span>
+            <div class="absolute top-2 right-2 flex flex-col items-end gap-1">
+                {% if anime.score %}
+                <span class="bg-yellow-500/90 text-black text-[9px] font-black px-2 py-0.5 rounded-md backdrop-blur-md shadow-lg">★ {{ anime.score }}</span>
                 {% endif %}
-                <h3 class="text-xs font-bold text-gray-200 truncate group-hover:text-red-500 transition">{{ anime.judul }}</h3>
+            </div>
+
+            <div class="absolute bottom-0 left-0 right-0 p-4">
+                {% if anime.lastch %}
+                <p class="text-[9px] text-violet-300 font-bold mb-1 tracking-wider uppercase">{{ anime.lastch }}</p>
+                {% endif %}
+                <h3 class="text-sm font-bold text-white leading-tight line-clamp-2 group-hover:text-violet-400 transition">{{ anime.judul }}</h3>
+            </div>
+            
+            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300 bg-black/20 backdrop-blur-[2px]">
+                <div class="w-10 h-10 rounded-full bg-violet-600 text-white flex items-center justify-center shadow-xl transform scale-50 group-hover:scale-100 transition">
+                    <i class="ri-play-fill text-lg"></i>
+                </div>
             </div>
         </div>
     </a>
+    {% endif %}
     {% endfor %}
 </div>
-
-{% if data_list|length > 0 %}
-<div class="flex justify-center items-center gap-3 mt-10 pt-6">
-    {% set base_link = '/search?q=' + (search_query if search_query else '') + '&page=' if search_query else ('/movies?page=' if is_movie_page else '/?page=') %}
-    
-    {% if current_page > 1 %}
-    <a href="{{ base_link }}{{ current_page - 1 }}" class="px-5 py-2 bg-[#151515] hover:bg-[#222] text-white text-xs font-bold rounded-full transition">← Prev</a>
-    {% endif %}
-    
-    <a href="{{ base_link }}{{ current_page + 1 }}" class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-full transition shadow-lg shadow-red-900/20">Next →</a>
-</div>
-{% endif %}
 
 {% endblock %}
 """
@@ -176,12 +228,14 @@ HTML_INDEX = """
 HTML_GENRES = """
 {% extends "base.html" %}
 {% block content %}
-<div class="max-w-5xl mx-auto">
-    <h2 class="text-xl font-bold text-white mb-6 text-center">DAFTAR GENRE</h2>
-    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+<div class="max-w-5xl mx-auto text-center">
+    <h1 class="text-3xl font-black text-white mb-2">Jelajahi Genre</h1>
+    <p class="text-gray-500 text-sm mb-10">Temukan anime favoritmu berdasarkan kategori</p>
+    
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
         {% for genre in genres %}
-        <a href="/search?q={{ genre }}" class="bg-[#111] hover:bg-red-900/30 border border-white/5 hover:border-red-500/50 py-3 rounded text-center text-xs font-bold text-gray-400 hover:text-white transition">
-            {{ genre }}
+        <a href="/search?q={{ genre }}" class="py-4 px-2 bg-white/5 hover:bg-violet-600 border border-white/5 hover:border-violet-500/50 rounded-xl transition group">
+            <span class="text-xs font-bold text-gray-300 group-hover:text-white tracking-wide">{{ genre }}</span>
         </a>
         {% endfor %}
     </div>
@@ -194,65 +248,70 @@ HTML_DETAIL = """
 {% block title %}{{ anime.judul }}{% endblock %}
 {% block content %}
 {% if error %}
-    <div class="text-center py-20 text-red-500 text-xs">{{ error }}</div>
+    <div class="text-center py-20 text-red-500 text-sm">{{ error }}</div>
 {% else %}
-    
-    <div class="max-w-6xl mx-auto bg-[#111] rounded-2xl p-6 md:p-8 border border-white/5 mb-8 shadow-2xl">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <div class="glass-panel rounded-3xl p-6 md:p-10 mb-10 relative overflow-hidden">
+        <div class="absolute inset-0 bg-cover bg-center opacity-20 blur-2xl" style="background-image: url('{{ anime.cover }}');"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-[#050507] via-[#050507]/90 to-transparent"></div>
+        
+        <div class="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
             
-            <div class="col-span-1">
-                <img src="{{ anime.cover }}" class="w-48 md:w-full rounded-lg shadow-2xl border border-white/10 mx-auto">
+            <div class="md:col-span-3 lg:col-span-3">
+                <img src="{{ anime.cover }}" class="w-48 md:w-full rounded-2xl shadow-2xl border border-white/10 mx-auto md:mx-0">
                 
-                <div class="mt-4 flex flex-col gap-2">
-                    <a href="#chapter-list" class="w-full py-2 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded text-center transition">
-                        MULAI NONTON
+                <div class="mt-4 space-y-2">
+                    <a href="#eps" class="block w-full py-3 bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold rounded-xl text-center shadow-lg shadow-violet-600/20 transition">
+                        MULAI MENONTON
                     </a>
-                    <button onclick="toggleFav()" id="fav-btn" class="w-full py-2 bg-[#222] hover:bg-[#333] text-gray-300 font-bold text-xs rounded transition">
+                    <button onclick="toggleFav()" id="fav-btn" class="block w-full py-3 bg-white/5 hover:bg-white/10 text-gray-300 text-xs font-bold rounded-xl border border-white/5 transition">
                         SIMPAN
                     </button>
                 </div>
             </div>
 
-            <div class="col-span-1 md:col-span-3 text-center md:text-left">
-                <h1 class="text-2xl md:text-4xl font-black text-white mb-4 leading-tight">{{ anime.judul }}</h1>
+            <div class="md:col-span-9 lg:col-span-9 text-center md:text-left">
+                <h1 class="text-3xl md:text-5xl font-black text-white mb-4 leading-tight">{{ anime.judul }}</h1>
                 
-                <div class="flex flex-wrap justify-center md:justify-start gap-2 mb-6">
-                    <span class="bg-white/5 border border-white/10 px-3 py-1 rounded text-[10px] font-bold text-gray-300">★ {{ anime.rating }}</span>
-                    <span class="bg-white/5 border border-white/10 px-3 py-1 rounded text-[10px] font-bold text-gray-300">{{ anime.status }}</span>
-                    <span class="bg-white/5 border border-white/10 px-3 py-1 rounded text-[10px] font-bold text-gray-300">{{ anime.custom_total_eps }}</span>
+                <div class="flex flex-wrap justify-center md:justify-start gap-3 mb-6">
+                    <div class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
+                        <i class="ri-star-fill text-yellow-500"></i>
+                        <span class="text-xs font-bold">{{ anime.rating }}</span>
+                    </div>
+                    <div class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
+                        <i class="ri-record-circle-line text-green-500"></i>
+                        <span class="text-xs font-bold text-gray-300 uppercase">{{ anime.status }}</span>
+                    </div>
+                    <div class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
+                        <i class="ri-film-line text-blue-500"></i>
+                        <span class="text-xs font-bold text-gray-300">{{ anime.custom_total_eps }}</span>
+                    </div>
                 </div>
 
-                <div class="flex flex-wrap justify-center md:justify-start gap-1 mb-6">
+                <div class="flex flex-wrap justify-center md:justify-start gap-2 mb-6">
                     {% for g in anime.genre %}
-                    <a href="/search?q={{ g }}" class="text-[10px] px-3 py-1 bg-[#1a1a1a] hover:bg-red-600 text-gray-400 hover:text-white rounded transition">{{ g }}</a>
+                    <a href="/search?q={{ g }}" class="text-[10px] px-3 py-1 rounded-full bg-white/5 hover:bg-white/20 text-gray-400 hover:text-white transition">{{ g }}</a>
                     {% endfor %}
                 </div>
 
-                <div class="bg-black/40 p-4 rounded-lg border border-white/5 text-xs text-gray-400 leading-relaxed text-justify h-48 overflow-y-auto custom-scroll">
+                <div class="bg-black/20 backdrop-blur-sm p-5 rounded-2xl border border-white/5 text-sm text-gray-300 leading-7 text-justify">
                     {{ anime.sinopsis }}
-                </div>
-                
-                <div class="mt-4 flex gap-6 text-[10px] text-gray-600 font-mono uppercase">
-                    <span>{{ anime.author }}</span>
-                    <span>{{ anime.published }}</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="max-w-6xl mx-auto" id="chapter-list-container">
-        <div class="flex justify-between items-center mb-4 border-b border-white/5 pb-2">
-            <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                <span class="w-1 h-4 bg-red-600 rounded-full"></span> EPISODE LIST
-            </h3>
-            <button onclick="reverseList()" class="text-[10px] bg-[#111] border border-white/5 px-3 py-1 rounded text-gray-400 hover:text-white transition">⇅ Urutan</button>
+    <div id="eps" class="pt-4">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-lg font-bold text-white border-l-4 border-violet-500 pl-3">Daftar Episode</h3>
+            <button onclick="reverseList()" class="text-xs bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg text-gray-400 hover:text-white transition">⇅ Terlama - Terbaru</button>
         </div>
         
-        <div id="chapter-list" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 max-h-[500px] overflow-y-auto pr-1">
+        <div id="chapter-list" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
             {% for chapter in anime.chapter %}
-            <a href="/watch/{{ anime.series_id }}/{{ chapter.url }}" class="bg-[#111] hover:bg-red-600 border border-white/5 hover:border-red-500 p-2 rounded text-center transition group">
-                <span class="block text-[9px] text-gray-500 group-hover:text-red-200 mb-1">{{ chapter.date }}</span>
-                <span class="ep-title text-xs font-bold text-white">Ep {{ chapter.ch }}</span>
+            <a href="/watch/{{ anime.series_id }}/{{ chapter.url }}" class="group bg-[#111] hover:bg-violet-600 border border-white/5 hover:border-violet-500/50 p-3 rounded-xl text-center transition relative overflow-hidden">
+                <span class="block text-[9px] text-gray-500 group-hover:text-violet-200 mb-1 font-mono">{{ chapter.date }}</span>
+                <span class="text-sm font-bold text-white">Ep {{ chapter.ch }}</span>
+                <span class="ep-badge absolute top-1 right-1 text-[8px]"></span>
             </a>
             {% endfor %}
         </div>
@@ -264,8 +323,8 @@ HTML_DETAIL = """
             const favs = JSON.parse(localStorage.getItem('albedo_favs')||'[]');
             const isFav = favs.some(f=>f.url===animeData.url);
             const btn = document.getElementById('fav-btn');
-            if(isFav) { btn.innerText = "TERSIMPAN"; btn.classList.add('text-red-500', 'border-red-500'); }
-            else { btn.innerText = "SIMPAN"; btn.classList.remove('text-red-500', 'border-red-500'); }
+            if(isFav) { btn.innerText = "TERSIMPAN"; btn.classList.add('bg-red-600','text-white'); btn.classList.remove('bg-white/5','text-gray-300'); }
+            else { btn.innerText = "SIMPAN"; btn.classList.remove('bg-red-600','text-white'); btn.classList.add('bg-white/5','text-gray-300'); }
         }
         function toggleFav() {
             let favs = JSON.parse(localStorage.getItem('albedo_favs')||'[]');
@@ -287,38 +346,45 @@ HTML_WATCH = """
 {% block content %}
 <div class="max-w-5xl mx-auto">
     
-    <div class="aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/10 relative z-10 mb-4">
+    <div class="relative bg-black rounded-2xl overflow-hidden shadow-2xl border border-white/10 aspect-video mb-6 group">
         {% if player_url %}
-        <iframe src="{{ player_url }}" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+        <iframe src="{{ player_url }}" class="absolute inset-0 w-full h-full z-10" frameborder="0" allowfullscreen></iframe>
         {% else %}
-        <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
-            <p class="text-red-500 font-bold text-sm">STREAM TIDAK TERSEDIA</p>
-            <p class="text-gray-500 text-xs mt-1">Coba episode lain.</p>
+        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <i class="ri-error-warning-line text-4xl text-gray-700 mb-2"></i>
+            <p class="text-gray-500 text-xs">Maaf, video belum tersedia di server.</p>
         </div>
         {% endif %}
     </div>
 
-    <div class="bg-[#111] p-4 rounded-xl border border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
-        <div class="text-center md:text-left">
-            <h1 class="text-xs font-bold text-gray-400">SEDANG MENONTON</h1>
-            <p class="text-sm font-bold text-white truncate max-w-[250px]">{{ anime_title }}</p>
-            <p class="text-[10px] text-green-500 mt-1">✓ Kualitas Terbaik (Auto-Selected)</p>
+    <div class="glass-panel p-5 rounded-2xl flex flex-col md:flex-row justify-between items-center gap-4">
+        
+        <div class="flex items-center gap-4">
+            <a href="/anime/{{ anime_url }}" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition">
+                <i class="ri-arrow-left-line"></i>
+            </a>
+            <div>
+                <h1 class="text-sm font-bold text-white mb-0.5">Sedang Menonton</h1>
+                <p class="text-xs text-violet-400 font-medium truncate max-w-[200px]">{{ anime_title }}</p>
+            </div>
+        </div>
+
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+            </span>
+            <span class="text-[10px] font-bold text-green-400 uppercase tracking-wider">AUTO QUALITY HD</span>
         </div>
 
         <div class="flex gap-2">
             {% if prev_ep %}
-            <a href="/watch/{{ anime_url }}/{{ prev_ep.url }}" class="px-5 py-2 bg-[#222] hover:bg-[#333] rounded text-xs font-bold text-white transition border border-white/5">
-                ← Prev
-            </a>
+            <a href="/watch/{{ anime_url }}/{{ prev_ep.url }}" class="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-bold text-white border border-white/5 transition">Prev</a>
             {% endif %}
             
-            <a href="/anime/{{ anime_url }}" class="px-5 py-2 bg-[#222] hover:bg-[#333] rounded text-xs font-bold text-gray-400 hover:text-white transition border border-white/5">
-                List
-            </a>
-
             {% if next_ep %}
-            <a href="/watch/{{ anime_url }}/{{ next_ep.url }}" class="px-5 py-2 bg-red-600 hover:bg-red-700 rounded text-xs font-bold text-white transition shadow-lg shadow-red-900/30">
-                Next →
+            <a href="/watch/{{ anime_url }}/{{ next_ep.url }}" class="px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-xs font-bold text-white shadow-lg shadow-violet-600/20 transition flex items-center gap-2">
+                Next <i class="ri-skip-forward-fill"></i>
             </a>
             {% endif %}
         </div>
@@ -335,44 +401,23 @@ HTML_WATCH = """
 {% endblock %}
 """
 
-HTML_HISTORY = """
-{% extends "base.html" %}
-{% block content %}
-<h2 class="text-lg font-bold mb-4 border-l-4 border-red-600 pl-3">RIWAYAT MENONTON</h2>
-<div id="hist-grid" class="flex flex-col gap-2"></div>
-<div id="empty" class="hidden text-center py-20 text-gray-500 text-xs bg-[#111] rounded-xl">Belum ada riwayat.</div>
-<script>
-    const hist = JSON.parse(localStorage.getItem('albedo_history') || '[]');
-    if(hist.length === 0) document.getElementById('empty').classList.remove('hidden');
-    hist.reverse().forEach(item => {
-        document.getElementById('hist-grid').insertAdjacentHTML('beforeend', `
-        <a href="${item.url}" class="flex items-center gap-4 bg-[#111] p-3 rounded hover:bg-[#1a1a1a] border border-white/5">
-            <div class="w-12 h-12 bg-gray-800 rounded overflow-hidden shrink-0"><img src="${item.cover}" class="w-full h-full object-cover"></div>
-            <div>
-                <h3 class="text-xs font-bold text-white">${item.title}</h3>
-                <p class="text-[10px] text-gray-500">${item.date}</p>
-            </div>
-            <div class="ml-auto text-xs text-red-500 font-bold">LANJUT ▶</div>
-        </a>`);
-    });
-</script>
-{% endblock %}
-"""
-
 HTML_FAVORITES = """
 {% extends "base.html" %}
 {% block content %}
-<h2 class="text-lg font-bold mb-4 border-l-4 border-red-600 pl-3">KOLEKSIKU</h2>
+<h2 class="text-xl font-bold text-white mb-6 border-l-4 border-violet-500 pl-3">Koleksi Saya</h2>
 <div id="grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>
+<div id="empty" class="hidden text-center py-32 text-gray-600 text-sm">Belum ada anime yang disimpan.</div>
 <script>
     const favs = JSON.parse(localStorage.getItem('albedo_favs')||'[]');
-    if(favs.length===0) document.getElementById('grid').innerHTML = '<div class="col-span-full py-20 text-center text-gray-500 text-xs bg-[#111] rounded">Kosong.</div>';
+    if(favs.length===0) document.getElementById('empty').classList.remove('hidden');
     favs.forEach(a => {
         document.getElementById('grid').insertAdjacentHTML('beforeend', `
-        <a href="${a.url}" class="block bg-[#111] rounded overflow-hidden relative group border border-white/5">
-            <div class="aspect-[3/4]"><img src="${a.cover}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition"></div>
-            <div class="p-2"><h3 class="text-[10px] font-bold text-gray-300 truncate">${a.judul}</h3></div>
-            <button onclick="rem(event, '${a.url}')" class="absolute top-1 right-1 bg-red-600 text-white w-5 h-5 rounded flex items-center justify-center text-[10px]">x</button>
+        <a href="${a.url}" class="group relative block bg-[#111] rounded-xl overflow-hidden shadow-lg border border-white/5">
+            <div class="aspect-[3/4]"><img src="${a.cover}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500"></div>
+            <div class="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
+                <h3 class="text-xs font-bold text-white truncate">${a.judul}</h3>
+            </div>
+            <button onclick="rem(event, '${a.url}')" class="absolute top-2 right-2 bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-lg hover:scale-110 transition z-20">✕</button>
         </a>`);
     });
     function rem(e, u) { e.preventDefault(); if(!confirm('Hapus?'))return; localStorage.setItem('albedo_favs', JSON.stringify(favs.filter(f=>f.url!==u))); location.reload(); }
@@ -380,8 +425,35 @@ HTML_FAVORITES = """
 {% endblock %}
 """
 
+HTML_HISTORY = """
+{% extends "base.html" %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-xl font-bold text-white border-l-4 border-violet-500 pl-3">Riwayat Tontonan</h2>
+    <button onclick="clearHist()" class="text-xs text-red-500 hover:text-red-400 font-bold">HAPUS SEMUA</button>
+</div>
+<div id="hist-grid" class="flex flex-col gap-3 max-w-3xl mx-auto"></div>
+<script>
+    const hist = JSON.parse(localStorage.getItem('albedo_history') || '[]');
+    if(hist.length === 0) document.getElementById('hist-grid').innerHTML = '<div class="py-20 text-center text-gray-600 text-sm">Belum ada riwayat.</div>';
+    hist.reverse().forEach(item => {
+        document.getElementById('hist-grid').insertAdjacentHTML('beforeend', `
+        <a href="${item.url}" class="flex gap-4 bg-[#111] p-3 rounded-xl border border-white/5 hover:border-violet-500/30 transition group">
+            <div class="w-16 h-20 bg-gray-800 rounded-lg overflow-hidden shrink-0"><img src="${item.cover}" class="w-full h-full object-cover group-hover:opacity-80"></div>
+            <div class="flex flex-col justify-center">
+                <h3 class="text-sm font-bold text-white mb-1 group-hover:text-violet-400">${item.title}</h3>
+                <p class="text-xs text-gray-500">${item.date}</p>
+                <div class="mt-2 text-[10px] font-bold text-violet-500 flex items-center gap-1"><i class="ri-play-fill"></i> LANJUTKAN</div>
+            </div>
+        </a>`);
+    });
+    function clearHist() { if(confirm('Hapus semua?')) { localStorage.removeItem('albedo_history'); location.reload(); } }
+</script>
+{% endblock %}
+"""
+
 # ==========================================
-# 3. BACKEND LOGIC (AUTO-QUALITY)
+# 3. BACKEND LOGIC (AUTO QUALITY ENGINE)
 # ==========================================
 
 app = Flask(__name__)
@@ -398,53 +470,38 @@ app.jinja_loader = DictLoader({
 API_BASE = "https://api.sansekai.my.id/api/anime"
 HEADERS = {'User-Agent': 'Mozilla/5.0'}
 
-# CACHE SEDERHANA
-@lru_cache(maxsize=64)
-def cached_fetch(endpoint, query_str=None, page=1):
+def smart_fetch(endpoint, params=None):
     try:
-        r = requests.get(f"{API_BASE}{endpoint}", headers=HEADERS, params={'query':query_str, 'page':page}, timeout=10)
+        r = requests.get(f"{API_BASE}{endpoint}", headers=HEADERS, params=params, timeout=12)
         raw = r.json()
         if isinstance(raw, list): return raw
         if 'data' in raw:
             d = raw['data']
-            if isinstance(d, list) and len(d)>0 and 'result' in d[0]: return d[0]['result']
+            if isinstance(d, list) and len(d) > 0 and 'result' in d[0]: return d[0]['result']
             return d
         return []
     except: return []
 
-# LOGIKA PINTAR PILIH RESOLUSI
 def get_best_quality_url(streams):
     if not streams: return None
-    
-    # 1. Cari MP4 (Google/Animekita) - Paling stabil
-    # Urutkan berdasarkan resolusi string (hacky way: string comparison 720 > 480 > 360)
-    # Kita cari yang mengandung '1080', lalu '720', lalu '480'
-    
     best_link = None
     best_score = 0
-    
+    # Logic: 1080p > 720p > 480p > 360p. Prefer MP4 over others.
     for s in streams:
         link = s.get('link', '')
         reso = s.get('reso', '')
         score = 0
-        
-        # Scoring Resolusi
         if '1080' in reso: score = 40
         elif '720' in reso: score = 30
         elif '480' in reso: score = 20
         elif '360' in reso: score = 10
-        
-        # Bonus Score untuk Provider Stabil (.mp4)
         if '.mp4' in link or 'animekita' in link: score += 5
         
         if score > best_score:
             best_score = score
             best_link = link
             
-    # Fallback: Jika tidak ada yang match, ambil link pertama
-    if not best_link and streams:
-        best_link = streams[0]['link']
-        
+    if not best_link and streams: best_link = streams[0]['link']
     return best_link
 
 def get_nav(chapters, current_url):
@@ -458,14 +515,14 @@ def get_nav(chapters, current_url):
 @app.route('/')
 def home():
     page = request.args.get('page', 1, type=int)
-    data = cached_fetch('/latest') if page == 1 else cached_fetch('/recommended', page=page)
-    return render_template_string(HTML_INDEX, data_list=data, current_page=page, is_movie_page=False)
+    data = smart_fetch('/latest') if page == 1 else smart_fetch('/recommended', params={'page': page})
+    return render_template_string(HTML_INDEX, data_list=data, current_page=page, is_movie_page=False, search_query=None)
 
 @app.route('/movies')
 def movies():
     page = request.args.get('page', 1, type=int)
-    data = cached_fetch('/movie', page=page)
-    return render_template_string(HTML_INDEX, data_list=data, current_page=page, is_movie_page=True)
+    data = smart_fetch('/movie', params={'page': page})
+    return render_template_string(HTML_INDEX, data_list=data, current_page=page, is_movie_page=True, search_query=None)
 
 @app.route('/genres')
 def genres():
@@ -484,56 +541,36 @@ def search():
     q = request.args.get('q')
     page = request.args.get('page', 1, type=int)
     if not q: return redirect('/')
-    data = cached_fetch('/search', query_str=q, page=page)
+    data = smart_fetch('/search', params={'query': q, 'page': page})
     return render_template_string(HTML_INDEX, data_list=data, search_query=q, current_page=page)
 
 @app.route('/anime/<path:url_id>')
 def detail(url_id):
-    try:
-        r = requests.get(f"{API_BASE}/detail", headers=HEADERS, params={'urlId': url_id}, timeout=10)
-        anime = r.json().get('data', [])[0]
-    except: return render_template_string(HTML_DETAIL, error="Gagal mengambil data.")
-    
-    anime['custom_total_eps'] = f"{len(anime.get('chapter', []))} Eps"
+    data = smart_fetch('/detail', params={'urlId': url_id})
+    if not data: return render_template_string(HTML_DETAIL, error="Tidak ditemukan.")
+    anime = data[0]
+    eps = anime.get('chapter', [])
+    anime['custom_total_eps'] = f"{len(eps)} Eps" if eps else "?"
     if not anime.get('series_id'): anime['series_id'] = url_id
     return render_template_string(HTML_DETAIL, anime=anime)
 
 @app.route('/watch/<path:anime_url>/<path:chapter_url>')
 def watch(anime_url, chapter_url):
-    # Param History
     title_p = request.args.get('title')
     cover_p = request.args.get('cover')
-
-    # Fetch Video
-    try:
-        r_vid = requests.get(f"{API_BASE}/getvideo", headers=HEADERS, params={'chapterUrlId': chapter_url}, timeout=10)
-        vid_data = r_vid.json().get('data', [])
-    except: vid_data = []
-
-    # Fetch Detail (Navigasi)
-    try:
-        r_det = requests.get(f"{API_BASE}/detail", headers=HEADERS, params={'urlId': anime_url}, timeout=10)
-        anime_data = r_det.json().get('data', [])
-    except: anime_data = []
+    vid_data = smart_fetch('/getvideo', params={'chapterUrlId': chapter_url})
+    anime_data = smart_fetch('/detail', params={'urlId': anime_url})
     
     title = anime_data[0].get('judul') if anime_data else (title_p or "")
     chapters = anime_data[0].get('chapter', []) if anime_data else []
     next_ep, prev_ep = get_nav(chapters, chapter_url)
     
     video_info = vid_data[0] if vid_data else None
-    
-    # AUTO QUALITY LOGIC: Ambil 1 link terbaik, hiraukan sisanya
     player_url = get_best_quality_url(video_info.get('stream', []) if video_info else [])
 
     return render_template_string(
-        HTML_WATCH,
-        video=video_info,
-        player_url=player_url, # Hanya 1 URL yang dikirim
-        anime_title=title,
-        anime_url=anime_url,
-        next_ep=next_ep, 
-        prev_ep=prev_ep,
-        current_url=chapter_url
+        HTML_WATCH, video=video_info, player_url=player_url,
+        anime_title=title, anime_url=anime_url, current_url=chapter_url, next_ep=next_ep, prev_ep=prev_ep
     )
 
 if __name__ == '__main__':

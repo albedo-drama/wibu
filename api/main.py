@@ -134,43 +134,45 @@ HTML_INDEX = """
 {% extends "base.html" %}
 {% block content %}
 
-<div class="mb-6 flex items-center justify-between border-b border-white/10 pb-4">
-    <h2 class="text-xl font-bold text-white uppercase flex items-center gap-2">
+<div class="mb-6 flex justify-between items-end border-b border-white/10 pb-4">
+    <h1 class="text-xl font-bold text-white uppercase flex items-center gap-2">
         {% if search_query %}
-            <span class="text-red-500">🔍</span> Hasil: "{{ search_query }}"
+            <i class="ri-search-eye-line text-red-600"></i> Hasil: "{{ search_query }}"
         {% elif is_movie_page %}
-            <span class="text-red-500">🎬</span> Anime Movies
+            <i class="ri-movie-2-line text-red-600"></i> Daftar Movie
         {% else %}
-            <span class="text-red-500">🔥</span> Update Terbaru
+            <i class="ri-fire-fill text-red-600"></i> Update Terbaru
         {% endif %}
-    </h2>
-    <span class="text-[10px] bg-[#1a1a1a] px-2 py-1 rounded text-gray-500 border border-white/10">Page {{ current_page }}</span>
+    </h1>
+    <span class="text-[10px] bg-white/10 px-2 py-1 rounded text-gray-400">Page {{ current_page }}</span>
 </div>
 
-<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
     {% if not data_list %}
-        <div class="col-span-full py-20 text-center bg-[#111] rounded-2xl border border-dashed border-white/10">
-            <p class="text-gray-500 text-sm">Tidak ada hasil ditemukan.</p>
+        <div class="col-span-full py-20 text-center bg-white/5 rounded-xl border border-dashed border-white/10">
+            <i class="ri-ghost-line text-4xl text-gray-600 mb-2"></i>
+            <p class="text-gray-400 text-xs font-bold">TIDAK ADA DATA</p>
+            {% if current_page > 1 %}
+            <a href="javascript:history.back()" class="inline-block mt-4 px-4 py-2 bg-red-600 rounded text-xs font-bold">Kembali</a>
+            {% endif %}
         </div>
     {% endif %}
 
     {% for anime in data_list %}
-    <a href="/anime/{{ anime.url if anime.url else anime.id }}" class="group relative block bg-[#111] rounded-xl overflow-hidden shadow-lg border border-white/5 card-shadow transition-all">
-        <div class="aspect-[3/4] overflow-hidden relative">
+    <a href="/anime/{{ anime.url if anime.url else anime.id }}" class="card-anime block bg-[#111] rounded-lg overflow-hidden relative group">
+        <div class="aspect-[3/4] relative overflow-hidden">
             <img src="{{ anime.cover }}" loading="lazy" class="w-full h-full object-cover transition duration-700 group-hover:scale-110 group-hover:opacity-60">
             <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
             
-            {% if anime.rating and anime.rating != 'N/A' %}
-            <div class="absolute top-2 right-2 bg-yellow-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded shadow">★ {{ anime.rating }}</div>
-            {% elif anime.lastup == 'Baru di Upload' %}
-            <div class="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded shadow animate-pulse">NEW</div>
+            {% if anime.score and anime.score != 'N/A' %}
+            <div class="absolute top-2 right-2 bg-yellow-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded shadow-lg">★ {{ anime.score }}</div>
             {% endif %}
             
             <div class="absolute bottom-0 left-0 right-0 p-3">
                 {% if anime.lastch %}
-                <span class="text-[9px] font-bold text-red-400 uppercase tracking-wider mb-1 block">{{ anime.lastch }}</span>
+                <span class="bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded mb-1 inline-block shadow">{{ anime.lastch }}</span>
                 {% endif %}
-                <h3 class="text-xs font-bold text-white leading-tight line-clamp-2 group-hover:text-red-500 transition">{{ anime.judul }}</h3>
+                <h3 class="text-xs md:text-sm font-bold text-gray-100 truncate group-hover:text-red-500 transition">{{ anime.judul }}</h3>
             </div>
         </div>
     </a>
@@ -178,14 +180,20 @@ HTML_INDEX = """
 </div>
 
 {% if data_list|length > 0 %}
-<div class="flex justify-center items-center gap-3 mt-12 pt-8 border-t border-white/5">
+<div class="flex justify-center items-center gap-3 mt-10 border-t border-white/10 pt-6">
     {% set base = '/search?q=' + (search_query if search_query else '') + '&page=' if search_query else ('/movies?page=' if is_movie_page else '/?page=') %}
-    
+
     {% if current_page > 1 %}
-    <a href="{{ base }}{{ current_page - 1 }}" class="px-6 py-2.5 bg-[#1a1a1a] hover:bg-[#222] rounded-full text-xs font-bold text-white transition flex items-center gap-2">← Prev</a>
+    <a href="{{ base }}{{ current_page - 1 }}" class="px-5 py-2 bg-[#222] hover:bg-[#333] text-white text-xs font-bold rounded-full transition flex items-center gap-1">
+        <i class="ri-arrow-left-s-line"></i> Prev
+    </a>
     {% endif %}
-    
-    <a href="{{ base }}{{ current_page + 1 }}" class="px-6 py-2.5 bg-red-600 hover:bg-red-700 rounded-full text-xs font-bold text-white transition flex items-center gap-2 shadow-lg shadow-red-900/20">Next →</a>
+
+    {% if data_list|length >= 10 %}
+    <a href="{{ base }}{{ current_page + 1 }}" class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-full transition shadow-lg shadow-red-900/50 flex items-center gap-1">
+        Next <i class="ri-arrow-right-s-line"></i>
+    </a>
+    {% endif %}
 </div>
 {% endif %}
 
@@ -204,10 +212,10 @@ HTML_GENRES = """
 {% extends "base.html" %}
 {% block content %}
 <div class="max-w-5xl mx-auto">
-    <h1 class="text-xl font-black text-center text-white mb-8">PILIH GENRE</h1>
+    <h1 class="text-2xl font-black text-center text-white mb-8 tracking-tight">KATEGORI GENRE</h1>
     <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
         {% for genre in genres %}
-        <a href="/search?q={{ genre }}" class="py-3 px-2 bg-[#111] border border-white/5 hover:border-red-600 hover:bg-red-900/10 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition text-center">
+        <a href="/search?q={{ genre }}" class="py-3 px-2 bg-[#111] border border-white/5 hover:border-red-600 hover:bg-red-900/20 rounded-lg text-xs font-bold text-gray-400 hover:text-white transition text-center">
             {{ genre }}
         </a>
         {% endfor %}
@@ -216,12 +224,75 @@ HTML_GENRES = """
 {% endblock %}
 """
 
+HTML_HISTORY = """
+{% extends "base.html" %}
+{% block title %}Riwayat Nonton{% endblock %}
+{% block content %}
+<div class="flex justify-between items-center mb-6 border-l-4 border-red-600 pl-4">
+    <h2 class="text-xl font-bold text-white">RIWAYAT NONTON</h2>
+    <button onclick="clearHistory()" class="text-[10px] text-red-500 hover:text-red-400 underline">Hapus Semua</button>
+</div>
+
+<div id="hist-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+<div id="empty" class="hidden text-center py-20 text-gray-500 text-sm bg-[#111] rounded-xl">Belum ada riwayat tontonan.</div>
+
+<script>
+    const hist = JSON.parse(localStorage.getItem('albedo_history') || '[]');
+    if(hist.length === 0) document.getElementById('empty').classList.remove('hidden');
+    
+    // Urutkan dari yg terbaru (index terakhir ke awal)
+    hist.reverse().forEach(item => {
+        document.getElementById('hist-grid').insertAdjacentHTML('beforeend', `
+        <a href="${item.url}" class="flex gap-3 bg-[#111] p-3 rounded-lg hover:bg-[#1a1a1a] transition group relative">
+            <div class="w-16 h-20 shrink-0 rounded overflow-hidden">
+                <img src="${item.cover}" class="w-full h-full object-cover group-hover:opacity-80">
+            </div>
+            <div class="flex flex-col justify-center overflow-hidden">
+                <h3 class="text-xs font-bold text-white truncate w-full mb-1 group-hover:text-red-500">${item.title}</h3>
+                <p class="text-[10px] text-gray-500">Ditonton: ${item.date}</p>
+                <span class="text-[10px] text-red-400 font-bold mt-1">Lanjut Nonton →</span>
+            </div>
+        </a>`);
+    });
+
+    function clearHistory() {
+        if(confirm('Hapus semua riwayat?')) {
+            localStorage.removeItem('albedo_history');
+            location.reload();
+        }
+    }
+</script>
+{% endblock %}
+"""
+
+HTML_FAVORITES = """
+{% extends "base.html" %}
+{% block content %}
+<h2 class="text-lg font-bold mb-4 border-l-4 border-red-600 pl-3">KOLEKSI SAYA</h2>
+<div id="grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>
+<div id="empty" class="hidden text-center py-20 text-gray-500 text-sm bg-[#111] rounded-xl">Belum ada koleksi.</div>
+<script>
+    const favs = JSON.parse(localStorage.getItem('albedo_favs')||'[]');
+    if(favs.length===0) document.getElementById('empty').classList.remove('hidden');
+    favs.forEach(a => {
+        document.getElementById('grid').insertAdjacentHTML('beforeend', `
+        <a href="${a.url}" class="block bg-[#111] rounded-lg overflow-hidden relative group">
+            <div class="aspect-[3/4]"><img src="${a.cover}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition"></div>
+            <div class="p-2"><h3 class="text-[10px] font-bold text-gray-300 truncate group-hover:text-red-500">${a.judul}</h3></div>
+            <button onclick="rem(event, '${a.url}')" class="absolute top-1 right-1 bg-red-600 text-white w-6 h-6 rounded flex items-center justify-center text-xs shadow hover:scale-110 transition">x</button>
+        </a>`);
+    });
+    function rem(e, u) { e.preventDefault(); if(!confirm('Hapus?'))return; localStorage.setItem('albedo_favs', JSON.stringify(favs.filter(f=>f.url!==u))); location.reload(); }
+</script>
+{% endblock %}
+"""
+
 HTML_DETAIL = """
 {% extends "base.html" %}
 {% block title %}{{ anime.judul }}{% endblock %}
 {% block content %}
 {% if error %}
-    <div class="text-center py-20 text-red-500 text-sm">{{ error }}</div>
+    <div class="text-center py-20 text-red-500 text-xs">{{ error }}</div>
 {% else %}
     <div class="grid grid-cols-1 md:grid-cols-12 gap-8 mb-10">
         <div class="md:col-span-3 lg:col-span-3">
@@ -274,8 +345,8 @@ HTML_DETAIL = """
         
         <div id="chapter-list" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2 max-h-[500px] overflow-y-auto custom-scroll pr-1">
             {% for chapter in anime.chapter %}
-            <a href="/watch/{{ anime.series_id }}/{{ chapter.url }}?title={{ anime.judul }}" 
-               class="bg-[#111] hover:bg-red-600 border border-white/5 hover:border-red-500 p-3 rounded-xl text-center transition group">
+            <a href="/watch/{{ anime.series_id }}/{{ chapter.url }}?title={{ anime.judul }}&cover={{ anime.cover }}" 
+               class="bg-[#18181b] hover:bg-red-600 border border-white/5 hover:border-red-500 p-3 rounded-xl text-center transition group">
                 <span class="block text-[9px] text-gray-500 group-hover:text-red-200 mb-1 font-mono">{{ chapter.date }}</span>
                 <span class="text-sm font-bold text-white">Ep {{ chapter.ch }}</span>
             </a>
@@ -311,9 +382,12 @@ HTML_WATCH = """
 {% block title %}Nonton {{ anime_title }}{% endblock %}
 {% block content %}
 <div class="max-w-5xl mx-auto">
-    <a href="/anime/{{ anime_url }}" class="inline-flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-white mb-4 transition">
-        <i class="ri-arrow-left-line"></i> KEMBALI
-    </a>
+    <div class="mb-4 flex items-center justify-between">
+        <a href="/anime/{{ anime_url }}" class="text-[10px] font-bold text-gray-500 hover:text-white flex items-center gap-1">
+            <i class="ri-arrow-left-line"></i> KEMBALI
+        </a>
+        <h1 class="text-xs font-bold text-gray-300 truncate max-w-[200px]">{{ anime_title }}</h1>
+    </div>
     
     {% if video %}
         <div id="player-container" class="relative bg-black rounded-xl overflow-hidden mb-6 shadow-2xl border border-white/10 group aspect-video">
@@ -337,16 +411,16 @@ HTML_WATCH = """
             </div>
 
             <div class="flex gap-2 items-center">
-                <button onclick="toggleFullscreen()" class="px-4 py-2.5 bg-[#222] hover:bg-[#333] rounded-lg text-xs font-bold text-white border border-white/5 transition flex items-center gap-2">
+                <button onclick="toggleFullscreen()" class="px-4 py-2.5 bg-[#222] hover:bg-[#333] rounded-lg text-[10px] font-bold text-white border border-white/5 transition flex items-center gap-2">
                     <i class="ri-fullscreen-line"></i> MODE BIOSKOP
                 </button>
 
                 {% if prev_ep %}
-                <a href="/watch/{{ anime_url }}/{{ prev_ep.url }}?title={{ anime_title }}" class="px-5 py-2.5 bg-[#1a1a1d] hover:bg-[#222] rounded-lg text-xs font-bold text-white transition border border-white/5">Prev</a>
+                <a href="/watch/{{ anime_url }}/{{ prev_ep.url }}?title={{ anime_title }}&cover={{ cover_img }}" class="px-5 py-2.5 bg-[#1a1a1d] hover:bg-[#222] rounded-lg text-xs font-bold text-white transition border border-white/5">Prev</a>
                 {% endif %}
                 
                 {% if next_ep %}
-                <a href="/watch/{{ anime_url }}/{{ next_ep.url }}?title={{ anime_title }}" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg text-xs font-bold text-white transition shadow-lg shadow-red-600/20">Next</a>
+                <a href="/watch/{{ anime_url }}/{{ next_ep.url }}?title={{ anime_title }}&cover={{ cover_img }}" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg text-xs font-bold text-white transition shadow-lg shadow-red-600/20">Next</a>
                 {% endif %}
             </div>
         </div>
@@ -360,8 +434,7 @@ HTML_WATCH = """
         var elem = document.getElementById("player-container");
         if (!document.fullscreenElement) {
             if (elem.requestFullscreen) { elem.requestFullscreen(); }
-            else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); } /* Safari */
-            else if (elem.msRequestFullscreen) { elem.msRequestFullscreen(); } /* IE11 */
+            else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); }
         } else {
             if (document.exitFullscreen) { document.exitFullscreen(); }
         }
@@ -369,33 +442,14 @@ HTML_WATCH = """
     
     document.addEventListener("DOMContentLoaded", function() {
         const currentUrl = "{{ current_url }}";
-        let history = JSON.parse(localStorage.getItem('watched_episodes') || '[]');
-        if (!history.includes(currentUrl)) { history.push(currentUrl); localStorage.setItem('watched_episodes', JSON.stringify(history)); }
+        const title = "{{ anime_title }}";
+        const cover = "{{ cover_img }}";
+        let history = JSON.parse(localStorage.getItem('albedo_history') || '[]');
+        history = history.filter(h => h.url !== currentUrl);
+        history.push({ title: title, cover: cover, url: currentUrl, date: new Date().toLocaleDateString() });
+        if(history.length > 20) history.shift();
+        localStorage.setItem('albedo_history', JSON.stringify(history));
     });
-</script>
-{% endblock %}
-"""
-
-HTML_FAVORITES = """
-{% extends "base.html" %}
-{% block content %}
-<h2 class="text-xl font-bold text-white mb-6 border-l-4 border-red-600 pl-3">KOLEKSIKU</h2>
-<div id="grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3"></div>
-<div id="empty" class="hidden text-center py-32 text-gray-600 text-sm">Belum ada anime yang disimpan.</div>
-<script>
-    const favs = JSON.parse(localStorage.getItem('albedo_favs')||'[]');
-    if(favs.length===0) document.getElementById('empty').classList.remove('hidden');
-    favs.forEach(a => {
-        document.getElementById('grid').insertAdjacentHTML('beforeend', `
-        <a href="${a.url}" class="group relative block bg-[#18181b] rounded-xl overflow-hidden shadow-lg border border-white/5">
-            <div class="aspect-[3/4]"><img src="${a.cover}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500"></div>
-            <div class="absolute bottom-0 inset-x-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
-                <h3 class="text-xs font-bold text-white truncate">${a.judul}</h3>
-            </div>
-            <button onclick="rem(event, '${a.url}')" class="absolute top-2 right-2 bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-lg hover:scale-110 transition z-20">✕</button>
-        </a>`);
-    });
-    function rem(e, u) { e.preventDefault(); if(!confirm('Hapus?'))return; localStorage.setItem('albedo_favs', JSON.stringify(favs.filter(f=>f.url!==u))); location.reload(); }
 </script>
 {% endblock %}
 """
@@ -410,6 +464,7 @@ app.jinja_loader = DictLoader({
     'index.html': HTML_INDEX,
     'genres.html': HTML_GENRES,
     'favorites.html': HTML_FAVORITES,
+    'history.html': HTML_HISTORY,
     'detail.html': HTML_DETAIL,
     'watch.html': HTML_WATCH,
     'search_landing.html': HTML_SEARCH_LANDING
@@ -419,27 +474,26 @@ API_BASE = "https://api.sansekai.my.id/api/anime"
 HEADERS = {'User-Agent': 'Mozilla/5.0'}
 
 @lru_cache(maxsize=64)
-def smart_fetch(endpoint, query_str=None, page=1):
+def cached_fetch(endpoint, query_str=None, page=1):
     try:
         r = requests.get(f"{API_BASE}{endpoint}", headers=HEADERS, params={'query':query_str, 'page':page}, timeout=12)
         raw = r.json()
         if isinstance(raw, list): return raw
         if 'data' in raw:
             d = raw['data']
-            if isinstance(d, list) and len(d)>0 and 'result' in d[0]: return d[0]['result']
+            if isinstance(d, list) and len(d)>0 and 'result' in d[0]:
+                return d[0]['result']
             return d
         return []
     except: return []
 
-# NORMALISASI DATA (PENTING UNTUK RATING)
 def normalize_data_list(data_list):
     cleaned = []
     if not data_list: return []
     for item in data_list:
         score = item.get('score') or item.get('rating')
         if not score or score == '?' or score == 'N/A': score = None
-        else: score = str(score)
-        item['rating'] = score
+        item['score'] = score # Kunci distandarkan ke 'score' agar sesuai template HTML
         cleaned.append(item)
     return cleaned
 
@@ -447,7 +501,6 @@ def get_best_quality_url(streams):
     if not streams: return None
     best_link = None
     best_score = 0
-    # Prioritas: 1080 > 720 > 480. Prioritas Provider: .mp4/animekita > Google
     for s in streams:
         link = s.get('link', '')
         reso = s.get('reso', '')
@@ -475,16 +528,17 @@ def get_nav(chapters, current_url):
 @app.route('/')
 def home():
     page = request.args.get('page', 1, type=int)
-    raw_data = smart_fetch('/latest') if page == 1 else smart_fetch('/recommended', params={'page': page})
+    # FIX: GUNAKAN /recent UNTUK SEMUA HALAMAN (Pagination Works!)
+    raw_data = cached_fetch('/recent', page=page)
     data = normalize_data_list(raw_data)
-    return render_template_string(HTML_INDEX, data_list=data, current_page=page, is_movie_page=False, search_query=None)
+    return render_template_string(HTML_INDEX, data_list=data, current_page=page, is_movie_page=False)
 
 @app.route('/movies')
 def movies():
     page = request.args.get('page', 1, type=int)
-    raw_data = smart_fetch('/movie', page=page)
+    raw_data = cached_fetch('/movie', page=page)
     data = normalize_data_list(raw_data)
-    return render_template_string(HTML_INDEX, data_list=data, current_page=page, is_movie_page=True, search_query=None)
+    return render_template_string(HTML_INDEX, data_list=data, current_page=page, is_movie_page=True)
 
 @app.route('/genres')
 def genres():
@@ -494,12 +548,16 @@ def genres():
 def favorites():
     return render_template_string(HTML_FAVORITES)
 
+@app.route('/history')
+def history():
+    return render_template_string(HTML_HISTORY)
+
 @app.route('/search')
 def search():
     q = request.args.get('q')
     page = request.args.get('page', 1, type=int)
     if not q: return render_template_string(HTML_SEARCH_LANDING)
-    raw_data = smart_fetch('/search', query_str=q, page=page)
+    raw_data = cached_fetch('/search', query_str=q, page=page)
     data = normalize_data_list(raw_data)
     return render_template_string(HTML_INDEX, data_list=data, search_query=q, current_page=page)
 
@@ -507,15 +565,15 @@ def search():
 def detail(url_id):
     try:
         r = requests.get(f"{API_BASE}/detail", headers=HEADERS, params={'urlId': url_id}, timeout=10)
-        raw = r.json().get('data', [])
-        if raw:
-            anime = raw[0]
+        raw = r.json()
+        data = raw.get('data', [])
+        if data:
+            anime = data[0]
+            # Normalisasi
             anime['rating'] = anime.get('score', anime.get('rating', 'N/A'))
             
-            # SINOPSIS FIX
             sinopsis = anime.get('sinopsis') or anime.get('synopsis')
-            if not sinopsis or sinopsis == 'N/A' or sinopsis.strip() == '':
-                sinopsis = "Sinopsis belum tersedia untuk anime ini."
+            if not sinopsis or sinopsis == 'N/A' or sinopsis.strip() == '': sinopsis = "Sinopsis belum tersedia."
             anime['sinopsis'] = sinopsis
             
             eps = anime.get('chapter', [])
@@ -524,12 +582,14 @@ def detail(url_id):
         else: anime = None
     except: anime = None
     
-    if not anime: return render_template_string(HTML_DETAIL, error="Gagal memuat data anime.")
+    if not anime: return render_template_string(HTML_DETAIL, error="Anime tidak ditemukan.")
     return render_template_string(HTML_DETAIL, anime=anime)
 
 @app.route('/watch/<path:anime_url>/<path:chapter_url>')
 def watch(anime_url, chapter_url):
     title_p = request.args.get('title')
+    cover_p = request.args.get('cover')
+    
     try:
         r_vid = requests.get(f"{API_BASE}/getvideo", headers=HEADERS, params={'chapterUrlId': chapter_url}, timeout=10)
         vid_data = r_vid.json().get('data', [])
@@ -540,17 +600,17 @@ def watch(anime_url, chapter_url):
         anime_data = r_det.json().get('data', [])
     except: anime_data = []
     
-    title = anime_data[0].get('judul') if anime_data else (title_p or "")
+    title = anime_data[0].get('judul') if anime_data else (title_p or "Anime")
+    cover = anime_data[0].get('cover') if anime_data else (cover_p or "")
     chapters = anime_data[0].get('chapter', []) if anime_data else []
     next_ep, prev_ep = get_nav(chapters, chapter_url)
-    video_info = vid_data[0] if vid_data else None
     
-    # AUTO QUALITY LOGIC
+    video_info = vid_data[0] if vid_data else None
     player_url = get_best_quality_url(video_info.get('stream', []) if video_info else [])
 
     return render_template_string(
         HTML_WATCH, video=video_info, player_url=player_url,
-        anime_title=title, anime_url=anime_url, current_url=chapter_url, next_ep=next_ep, prev_ep=prev_ep
+        anime_title=title, anime_url=anime_url, next_ep=next_ep, prev_ep=prev_ep, cover_img=cover
     )
 
 if __name__ == '__main__':
